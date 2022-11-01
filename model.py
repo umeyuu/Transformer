@@ -54,24 +54,6 @@ class MultiHeadAttention(nn.Module):
     def forward(self, x, memory, mask=None):
         
         batch_size, seq_len = x.size(0), x.size(1)
-        # # [head, batch_size, seq_len, d_model]
-        # q = x.repeat(self.head, 1, 1, 1)
-        # k = memory.repeat(self.head, 1, 1, 1)
-        # v = memory.repeat(self.head, 1, 1, 1)
-        
-        # # Scaled dot product 前の線形変換
-        # # [head, batch_size, seq_len, d_k]
-        # # q = torch.einsum('hijk,hkl->hijl', (q, self.W_q))
-        # # k = torch.einsum('hijk,hkl->hijl', (k, self.W_k))
-        # # v = torch.einsum('hijk,hkl->hijl', (v, self.W_v))
-        # q = self.q_linear(q)
-        # k = self.k_linear(k)
-        # v = self.v_linear(v)
-        
-        # # heda数に分割
-        # q = q.view(self.head * batch_size, seq_len, self.d_k)
-        # k = k.view(self.head * batch_size, seq_len, self.d_k)
-        # v = v.view(self.head * batch_size, seq_len, self.d_v)
         
         q = self.split(self.q_linear(x))
         k = self.split(self.k_linear(memory))
@@ -103,52 +85,6 @@ class MultiHeadAttention(nn.Module):
         x = x.transpose(1, 2)
         return x.contiguous().view(batch_size, -1, self.d_model)
 
-# class MultiHeadAttention(nn.Module):
-#     def __init__(self, dim, n_heads, dropout=0.1):
-#         super(MultiHeadAttention, self).__init__()
-
-#         self.n_heads = n_heads
-#         self.dim = dim
-#         self.dropout = dropout
-
-#         self.q_lin = nn.Linear(dim, dim)
-#         self.k_lin = nn.Linear(dim, dim)
-#         self.v_lin = nn.Linear(dim, dim)
-#         self.out_lin = nn.Linear(dim, dim)
-
-#     def forward(self, x, memory, mask):
-#         batch_size, _, dim = x.shape
-#         assert dim == self.dim, 'dimension mismatched'
-
-#         dim_per_head = dim // self.n_heads
-
-#         def split(x):
-#             x = x.view(batch_size, -1, self.n_heads, dim_per_head)
-#             return x.transpose(1, 2)
-
-#         def combine(x):
-#             x = x.transpose(1, 2)
-#             return x.contiguous().view(batch_size, -1, dim)
-
-
-#         q = split(self.q_lin(x))
-#         k = split(self.k_lin(memory))
-#         v = split(self.v_lin(memory))
-
-#         q = q / math.sqrt(dim_per_head)
-
-#         shape = mask.shape
-#         mask_shape = (shape[0], 1, shape[1], shape[2]) if mask.dim() == 3 else (shape[0], 1, 1, shape[1])
-#         logit = torch.matmul(q, k.transpose(2, 3))
-#         logit.masked_fill_(mask.view(mask_shape), -float('inf'))
-
-#         weights = F.softmax(logit, dim=-1)
-#         weights = F.dropout(weights, p=self.dropout, training=self.training)
-
-#         output = torch.matmul(weights, v)
-#         output = combine(output)
-
-#         return self.out_lin(output)
        
 
 class PositionalEmbeding(nn.Module):
