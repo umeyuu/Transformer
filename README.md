@@ -1,3 +1,3 @@
 # Transformer
 
-Transformerをscaledotproduct から書いて実装した
+Transformerの勉強で実装したコード。pytorchで実装した。
